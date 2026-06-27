@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soy Guampudo</title>
+    <meta name="description" content="Base de datos colaborativa sobre actos de infidelidad. Busca por nombre o DNI.">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo" id="logoHome">
+            <h1>Soy Guampudo</h1>
+        </div>
+        <div class="search-container">
+            <input type="text" id="mainSearch" placeholder="Buscar por nombre o DNI...">
+        </div>
+        <button class="btn-primary" id="btnAddPerson">Reportar Infiel</button>
+    </header>
+
+    <main>
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+        <div class="catalog-grid" id="catalogGrid">
+            <!-- Cards will be injected here via JS -->
+        </div>
+    </main>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeDetails">&times;</span>
+            <div class="modal-body" id="modalBody">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Person Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; padding: 2rem;">
+            <span class="close-modal" id="closeAdd">&times;</span>
+            <h2 style="margin-bottom: 2rem; color: var(--accent);">Reportar Nueva Persona</h2>
+            <form id="addPersonForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" id="formNombre" required placeholder="Ej: Carlos">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" id="formApellido" required placeholder="Ej: Peralta">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de Nacimiento</label>
+                        <input type="date" id="formNacimiento" required>
+                    </div>
+                    <div class="form-group">
+                        <label>DNI (Opcional)</label>
+                        <input type="text" id="formDNI" placeholder="Ej: 1.234.567">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Historia del Acto</label>
+                    <textarea id="formHistoria" rows="4" required placeholder="Contá qué pasó..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Foto de Perfil</label>
+                    <label class="custom-file-upload">
+                        <span id="fileTextPerfil">Seleccionar Imagen</span>
+                        <input type="file" id="formFotoPerfil" accept="image/*" required
+                            onchange="document.getElementById('fileTextPerfil').innerText = this.files[0] ? this.files[0].name : 'Seleccionar Imagen'">
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Fotos de Evidencia (Opcional)</label>
+                    <label class="custom-file-upload">
+                        <span id="fileTextEvidencia">Añadir Evidencias (Múltiples)</span>
+                        <input type="file" id="formFotosEvidencia" accept="image/*" multiple
+                            onchange="document.getElementById('fileTextEvidencia').innerText = this.files.length > 0 ? this.files.length + ' archivo(s) seleccionado(s)' : 'Añadir Evidencias (Múltiples)'">
+                    </label>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Instagram (@usuario)</label>
+                        <input type="text" id="formInstagram" placeholder="@ejemplo">
+                    </div>
+                    <div class="form-group">
+                        <label>Twitter/X (@usuario)</label>
+                        <input type="text" id="formTwitter" placeholder="@ejemplo">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Publicar Reporte</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal para Evidencias -->
+    <div id="lightboxModal" class="modal" style="z-index: 2000; align-items: center; justify-content: center; background: rgba(0,0,0,0.95);">
+        <span class="close-modal" id="closeLightbox" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; text-shadow: 0 0 10px rgba(0,0,0,0.5);">&times;</span>
+        <img id="lightboxImage" src="" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

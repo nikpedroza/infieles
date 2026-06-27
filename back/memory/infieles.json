@@ -1,0 +1,89 @@
+{
+    "b0e65ace-511d-4f2e-9e09-c455e49ccde1": {
+        "name": "Matias",
+        "surname": "Rissardo",
+        "birth_day": "2010-01-10",
+        "DNI": "43434379",
+        "profile_photo": "img/b0e65ace-511d-4f2e-9e09-c455e49ccde1_mati.jpg",
+        "social_media": {
+            "instagram": "@gordoputo",
+            "twitter": "@malamigo"
+        },
+        "infidelities": [
+            {
+                "id_infidelities": "4f28b24d-609c-4981-92c1-6c09cb3899f1",
+                "datetime": "2026-05-16",
+                "story": "Lo vi en un boliche de trolos con gordas",
+                "evidence": [
+                    "img/b0e65ace-511d-4f2e-9e09-c455e49ccde1_ev_aaf4856c-95df-465d-ac77-ef77ff5ba703.jpg",
+                    "img/b0e65ace-511d-4f2e-9e09-c455e49ccde1_ev_bf486016-8ec3-4246-8577-06f2bee7f10c.jpg"
+                ]
+            }
+        ],
+        "comments": [
+            {
+                "id_comments": "286730f2-4fa2-4af6-9ad7-1e39cd5f7a72",
+                "parent_id": null,
+                "comment_datetime": "2026-05-17T21:59:14.183743",
+                "message": "este gordo puto me cago a mi tambien"
+            },
+            {
+                "id_comments": "6d256ed0-ad47-4aec-8d47-f954e3dcabc6",
+                "parent_id": "286730f2-4fa2-4af6-9ad7-1e39cd5f7a72",
+                "comment_datetime": "2026-05-17T21:59:19.986431",
+                "message": "aaa mira vos"
+            },
+            {
+                "id_comments": "22d73b50-0b9f-4ae3-a8f4-72cfda9f224d",
+                "parent_id": "286730f2-4fa2-4af6-9ad7-1e39cd5f7a72",
+                "comment_datetime": "2026-05-17T21:59:27.889947",
+                "message": "sisi verdad coge trabas en lanus"
+            },
+            {
+                "id_comments": "e87e5902-91bb-48a4-96ae-e73e234e167f",
+                "parent_id": null,
+                "comment_datetime": "2026-05-17T22:24:13.693736",
+                "message": "Test Test"
+            }
+        ]
+    },
+    "c67212d1-0e4a-4f9f-9c95-bfc85fee259d": {
+        "name": "teste",
+        "surname": "test",
+        "birth_day": "2001-10-10",
+        "DNI": "1234",
+        "profile_photo": "img/c67212d1-0e4a-4f9f-9c95-bfc85fee259d_IMG_6968.JPG",
+        "social_media": {
+            "instagram": null,
+            "twitter": null
+        },
+        "infidelities": [
+            {
+                "id_infidelities": "5a9d3349-0fa6-4841-8597-5d0d4f35f8b3",
+                "datetime": "2026-05-16",
+                "story": "Picante",
+                "evidence": []
+            }
+        ],
+        "comments": [
+            {
+                "id_comments": "fbe2743c-e07c-421c-bc98-9e28d150e31b",
+                "parent_id": null,
+                "comment_datetime": "2026-05-27T02:21:20.696488",
+                "message": "alla is back"
+            },
+            {
+                "id_comments": "b82b4400-d7b8-40a9-a8fd-0fcdae1fc920",
+                "parent_id": "fbe2743c-e07c-421c-bc98-9e28d150e31b",
+                "comment_datetime": "2026-05-27T02:21:29.264643",
+                "message": "really?"
+            },
+            {
+                "id_comments": "36b65f6d-565a-4dde-957c-e95c549ad39c",
+                "parent_id": null,
+                "comment_datetime": "2026-05-27T02:21:40.405440",
+                "message": "new comment"
+            }
+        ]
+    }
+}

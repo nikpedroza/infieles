@@ -1,0 +1,3 @@
+.env
+back/img/*
+!back/img/.gitkeep
