@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from database import engine
 from fastapi.middleware.cors import CORSMiddleware
+import models
 
 from routers.users import router as router_user
 
@@ -27,8 +28,8 @@ app.mount("/img", StaticFiles(directory="img"), name="img")
 
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return JSONResponse(content={"status": "ok"}, status_code=200) 
 
-@app.api_route("/img", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+@app.api_route("/img", methods=["GET", "POST", "PUT", "DELETE", "PATCH"], include_in_schema=False)
 def block_img():
     return JSONResponse(status_code=403, content={"detail": "No autorizado"})
