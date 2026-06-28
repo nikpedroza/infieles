@@ -11,7 +11,7 @@ app = FastAPI()
 app.include_router(router_user,prefix="/user",tags=["user"])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # En producción deberías poner la URL de tu front
+    allow_origins=["*"], #modificar en produccion
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
