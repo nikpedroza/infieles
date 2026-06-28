@@ -58,7 +58,7 @@ function getImageUrl(photoPath) {
 // Rendering
 function renderCatalog(filter = '') {
     catalogGrid.innerHTML = '';
-    
+
     // Convertimos el Objeto a un Array pero le inyectamos la key como 'id'
     const peopleList = Object.keys(people).map(key => {
         return { id: key, ...people[key] };
@@ -92,7 +92,7 @@ function renderCatalog(filter = '') {
 // Comment Helpers
 function buildCommentTree(commentsList) {
     if (!commentsList || commentsList.length === 0) return [];
-    
+
     const commentMap = {};
     commentsList.forEach(c => {
         // Usamos c.id_comments como identificador principal. Si no existe, usamos una generación local.
@@ -115,14 +115,14 @@ function buildCommentTree(commentsList) {
 function renderCommentNode(comment, personId) {
     const authorName = "Anónimo";
     const authorInitials = "A";
-    
+
     // El backend maneja comment_datetime, comment_date o datetime
     const dateValue = comment.comment_datetime || comment.comment_date || comment.datetime || '';
     const displayDate = formatCommentDate(dateValue);
     const dateHtml = displayDate ? `<span class="comment-date">${displayDate}</span>` : '';
-    
+
     // Mapear comentarios hijos recursivamente
-    const repliesHtml = comment.replies && comment.replies.length > 0 
+    const repliesHtml = comment.replies && comment.replies.length > 0
         ? `<div class="comment-replies">
                ${comment.replies.map(reply => renderCommentNode(reply, personId)).join('')}
            </div>`
@@ -170,7 +170,7 @@ function renderCommentNode(comment, personId) {
 function bindCommentsEvents(personId) {
     const modalBodyEl = document.getElementById('modalBody');
     if (!modalBodyEl) return;
-    
+
     // Bind events for reply toggle buttons
     const replyToggleButtons = modalBodyEl.querySelectorAll('.btn-toggle-reply');
     replyToggleButtons.forEach(btn => {
@@ -208,14 +208,14 @@ function bindCommentsEvents(personId) {
 
 function updateCommentsDOM(commentsList, personId) {
     const commentsTree = buildCommentTree(commentsList);
-    const commentsHtml = commentsTree.length > 0 
+    const commentsHtml = commentsTree.length > 0
         ? commentsTree.map(c => renderCommentNode(c, personId)).join('')
         : '<p style="color: var(--text-secondary);" id="noCommentsText">Sin comentarios aún. ¡Sé el primero en comentar!</p>';
-        
+
     const commentsTreeContainer = document.getElementById('commentsTreeContainer');
     if (commentsTreeContainer) {
         commentsTreeContainer.innerHTML = commentsHtml;
-        
+
         // Re-asociar listeners a los nuevos formularios inyectados recursivamente
         bindCommentsEvents(personId);
     }
@@ -236,10 +236,10 @@ async function submitComment(personId, message, parentId) {
 
         if (response.ok) {
             const updatedPerson = await response.json();
-            
+
             // 1. Actualizamos únicamente la sección de comentarios en el DOM sin recargas ni fetches extra
             updateCommentsDOM(updatedPerson.comments, personId);
-            
+
             // 2. Limpiamos y replegamos los inputs correspondientes
             if (parentId) {
                 const textarea = document.getElementById(`replyText_${parentId}`);
@@ -251,7 +251,7 @@ async function submitComment(personId, message, parentId) {
                 if (textarea) textarea.value = '';
                 const container = document.getElementById('mainCommentFormContainer');
                 if (container) container.classList.remove('active');
-                
+
                 // Restablecer botón de enviar comentario principal
                 const mainForm = document.getElementById('mainCommentForm');
                 if (mainForm) {
@@ -262,7 +262,7 @@ async function submitComment(personId, message, parentId) {
                     }
                 }
             }
-            
+
             // 3. Actualizamos la lista del catálogo principal silenciosamente en el fondo
             loadData(true);
         } else {
@@ -277,7 +277,7 @@ async function submitComment(personId, message, parentId) {
             `Detalle del error: ${error.message}\n\n` +
             `Asegurate de que tu servidor esté corriendo correctamente.`
         );
-        
+
         // Si hay error, restaurar botones correspondientes
         if (parentId) {
             const replyForm = document.querySelector(`.reply-form[data-comment-id="${parentId}"]`);
@@ -319,7 +319,7 @@ async function openDetails(personSummary) {
         person.id = personSummary.id;
 
         const commentsTree = buildCommentTree(person.comments);
-        const commentsHtml = commentsTree.length > 0 
+        const commentsHtml = commentsTree.length > 0
             ? commentsTree.map(c => renderCommentNode(c, person.id)).join('')
             : '<p style="color: var(--text-secondary);" id="noCommentsText">Sin comentarios aún. ¡Sé el primero en comentar!</p>';
 
@@ -334,8 +334,8 @@ async function openDetails(personSummary) {
                     <strong>Estado:</strong> Reportado por infidelidad
                 </p>
                 <div class="social-links">
-                    ${person.social_media && person.social_media.instagram ? `<a href="https://instagram.com/${person.social_media.instagram.replace('@','')}" target="_blank" class="social-badge instagram">Instagram</a>` : ''}
-                    ${person.social_media && person.social_media.twitter ? `<a href="https://twitter.com/${person.social_media.twitter.replace('@','')}" target="_blank" class="social-badge twitter">Twitter/X</a>` : ''}
+                    ${person.social_media && person.social_media.instagram ? `<a href="https://instagram.com/${person.social_media.instagram.replace('@', '')}" target="_blank" class="social-badge instagram">Instagram</a>` : ''}
+                    ${person.social_media && person.social_media.twitter ? `<a href="https://twitter.com/${person.social_media.twitter.replace('@', '')}" target="_blank" class="social-badge twitter">Twitter/X</a>` : ''}
                 </div>
             </div>
         </div>
@@ -403,11 +403,11 @@ async function openDetails(personSummary) {
                 const textarea = document.getElementById('mainCommentText');
                 const message = textarea.value.trim();
                 if (!message) return;
-                
+
                 const submitBtn = mainForm.querySelector('.btn-submit-comment');
                 submitBtn.disabled = true;
                 submitBtn.innerText = 'Enviando...';
-                
+
                 await submitComment(person.id, message, null);
             };
         }
@@ -463,7 +463,7 @@ window.onclick = (event) => {
 
 addPersonForm.onsubmit = async (e) => {
     e.preventDefault();
-    
+
     const fotoInput = document.getElementById('formFotoPerfil');
     if (!fotoInput.files || fotoInput.files.length === 0) {
         alert("Por favor, seleccioná una Foto de Perfil. Es obligatoria.");
@@ -491,23 +491,23 @@ addPersonForm.onsubmit = async (e) => {
     formData.append("nombre", document.getElementById('formNombre').value);
     formData.append("apellido", document.getElementById('formApellido').value);
     formData.append("fecha_nacimiento", document.getElementById('formNacimiento').value);
-    
+
     const dni = document.getElementById('formDNI').value;
     if (dni) formData.append("dni", dni);
-    
+
     formData.append("historia_del_infiel", document.getElementById('formHistoria').value);
-    
+
     if (fotoInput.files.length > 0) {
         formData.append("foto_perfil", fotoInput.files[0]);
     }
-    
+
     for (let i = 0; i < evidenciasInput.files.length; i++) {
         formData.append("foto_evidencia", evidenciasInput.files[i]);
     }
-    
+
     const instagram = document.getElementById('formInstagram').value;
     if (instagram) formData.append("instagram", instagram);
-    
+
     const twitter = document.getElementById('formTwitter').value;
     if (twitter) formData.append("twitter", twitter);
 
@@ -526,11 +526,11 @@ addPersonForm.onsubmit = async (e) => {
             alert('Reporte publicado exitosamente.');
             addModal.style.display = 'none';
             addPersonForm.reset();
-            
+
             // Limpiar labels custom
             document.getElementById('fileTextPerfil').innerText = 'Seleccionar Imagen';
             document.getElementById('fileTextEvidencia').innerText = 'Añadir Evidencias';
-            
+
             // Recargar datos desde el servidor
             loadData();
         } else {
@@ -557,7 +557,7 @@ async function loadData(silent = false) {
         if (response.ok) {
             people = await response.json();
             renderCatalog();
-            
+
             // Restaurar el modal si la página se recargó y hay un hash de usuario activo
             checkHash();
         } else {
