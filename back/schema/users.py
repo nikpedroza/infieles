@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 from datetime import date
 
@@ -17,9 +17,11 @@ class CheckDuplicado(BaseModel):
 
 #Response
 class AllUsersResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: UUID
     nombre: str
-    apelido: str
+    apellido: str
     foto_perfil: str
 
 class PaginatedUsers(BaseModel):
