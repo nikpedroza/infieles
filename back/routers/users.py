@@ -1,20 +1,41 @@
-from fastapi import APIRouter, HTTPException, Form, UploadFile, File, HTTPException
+from fastapi import APIRouter, HTTPException, Form, UploadFile, File, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
-from services.infieles_data import agregar_persona, base_infieles, guardar_data
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
-from uuid import uuid4
+from uuid import UUID, uuid4
+import os
 import aiofiles
-from datetime import datetime
-from schema.comments import Comments
+import asyncio
+from database import get_db
+from schema import UserCreate, PaginatedUsers, CheckDuplicado
+from repositories import UsuarioRepository, SocialMediaRepository, InfidelityRepository
 
 router = APIRouter()
 
+@router.get("/", response_model=PaginatedUsers)
+async def get_all_users(
+    db: AsyncSession = Depends(get_db),
+    page: int = Query(default=1, ge=1),
+    page_size : int = Query(default=10, ge=1, le=40)
+):
+    users_repo = UsuarioRepository(db)
+    offset = (page - 1) * page_size
+    usuarios, total = await users_repo.get_all(offset, page_size)
+    return PaginatedUsers(
+        data=usuarios,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=-(-total // page_size)
+    ) 
+
 @router.get("/{id}")
-def get_user(id: str):
-    if id in base_infieles:
-        return JSONResponse(status_code=200, content=base_infieles[id])
-    raise HTTPException(status_code=404, detail={"msg":"usuario innexistente"})
+async def get_user(id: UUID, db: AsyncSession = Depends(get_db)):
+    users_repo = UsuarioRepository(db)
+    usuario = await users_repo.get_by_id(id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail={"msg":"usuario innexistente"})
+    return usuario
 
 @router.post("/new-user")
 async def new_user(
@@ -27,82 +48,85 @@ async def new_user(
     foto_evidencia: Optional[List[UploadFile]] = File(None),
     instagram: Optional[str] = Form(None),
     twitter: Optional[str] = Form(None),
+    db: AsyncSession = Depends(get_db)
 ):
-    date_new_user_form = datetime.now().date()
-    id_new_user = str(uuid4())
-    ruta_img = f"img/{id_new_user}_{foto_perfil.filename}".replace(" ","_")
+    #Vamos a guardar las fotos en paralelo
+    async def guardar_foto(foto: UploadFile, ruta: str) -> None:
+        if foto.size > 50 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail=f"{foto.filename} es muy grande")
+        ruta = os.path.join("img", ruta)
+        async with aiofiles.open(ruta, "wb") as f:
+            while True:
+                chunk = await foto.read(1024 * 64)
+                if not chunk:
+                    break
+                await f.write(chunk)
 
-    if foto_perfil.size > 50 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="La foto de perfil es muy grande")
+    users_repo = UsuarioRepository(db)
+    socialmedia_repo = SocialMediaRepository(db)
+    infiel_repo = InfidelityRepository(db)
 
-    async with aiofiles.open(ruta_img, "wb") as f:
-        while True:
-            chunk = await foto_perfil.read(1024 * 64)
-            if not chunk:
-                break
-            await f.write(chunk)
-    
+    ruta_img = f"{uuid4()}_{foto_perfil.filename}".replace(" ","_")
+
+    nuevo_usuario = UserCreate(
+        nombre=nombre,
+        apellido=apellido,
+        fecha_de_nacimiento=fecha_nacimiento,
+        dni=dni,
+        foto_perfil=ruta_img
+    )
+
+    usuario = await users_repo.create_user(usuario=nuevo_usuario)
+    if usuario is None:
+        raise HTTPException(status_code=409, detail="El usuario ya existe")
+
+    #Primero guardamos fotos antes de los commits
     fotos_evidencia = []
+    tareas = []
+
     if foto_evidencia:
         for foto in foto_evidencia:
-            ruta_evidencia = f"img/{id_new_user}_ev_{foto.filename}".replace(" ","_")
-            if foto_perfil.size > 50 * 1024 * 1024:
-                raise HTTPException(status_code=413, detail="La foto de evidencia es muy grande")
-
-            async with aiofiles.open(ruta_evidencia, "wb") as f:
-                while True:
-                    chunk = await foto.read(1024 * 64)
-                    if not chunk:
-                        break
-                    await f.write(chunk)
-            
-            fotos_evidencia.append(ruta_evidencia)
+            ruta = f"{uuid4()}_ev_{foto.filename}".replace(" ","_")
+            fotos_evidencia.append(ruta)
+            tareas.append(guardar_foto(foto, ruta))
     
-    dato_user = {
-        id_new_user: {
-            "name": nombre,
-            "surname": apellido,
-            "birth_day": fecha_nacimiento,
-            "DNI": dni,
-            "profile_photo": ruta_img,
-            "social_media": {
-                "instagram": instagram,
-                "twitter": twitter
-            },
-            "infidelities": [
-                {
-                    "id_infidelities": f"{uuid4()}",
-                    "datetime": f"{date_new_user_form}",
-                    "story": historia_del_infiel,
-                    "evidence": fotos_evidencia
-                }
-            ],
-            "comments": [
-            ]
-        }
-    }
+    await asyncio.gather(guardar_foto(foto_perfil, ruta_img), *tareas)
 
-    agregar_persona(dato_user)
+    
+    #Creacion de los demas datos en las distintas tablas
+    if instagram:
+        await socialmedia_repo.create_social(usuario.id, "instagram", instagram)
+    if twitter:
+        await socialmedia_repo.create_social(usuario.id, "twitter", twitter)
+
+    infiel_data = await infiel_repo.infidelity_create(user_id=usuario.id, historia=historia_del_infiel)
+
+    if fotos_evidencia:
+        for ruta in fotos_evidencia:
+            await infiel_repo.infidelity_evidence_create(infiel_data.id, path=ruta)
+
+    await db.commit()
+
     return JSONResponse(status_code=200, content={"msg":"Persona agregada correctamente"})
 
-@router.post("/{id}/comment")
-def comentario(id: str, comment: Comments):
-    if id not in base_infieles:
-        raise HTTPException(status_code=404, detail={"msg":"usuario innexistente"})
-    
-    if "comments" not in base_infieles[id]:
-        base_infieles[id]["comments"] = []
-    
-    if comment.parent_id is not None:
-        comment_list = base_infieles[id]["comments"]
-        for co in comment_list:
-            if co["id_comments"] == comment.parent_id:
-                break
-        else:
-            raise HTTPException(status_code=404, detail={"msg":"El comentario al que desea reescribir no existe"})
 
-    comment_dict = jsonable_encoder(comment)
-    base_infieles[id]["comments"].append(comment_dict)
-    
-    guardar_data()
-    return JSONResponse(status_code=200, content=base_infieles[id])
+@router.post("/{id}/comment")
+def comentario(id: str):
+    pass
+    #HACER
+
+@router.post("/check-usuario")
+async def check_usuario(
+    nombre: str = Form(...),
+    apellido: str = Form(...),
+    fecha_nacimiento: str = Form(...),
+    db: AsyncSession = Depends(get_db)
+):
+    users_repo = UsuarioRepository(db)
+    user_check = CheckDuplicado(
+        nombre=nombre,
+        apellido=apellido,
+        fecha_de_nacimiento=fecha_nacimiento
+    )
+    existe = await users_repo.check_existente(user_check)
+    return {"existe": bool(existe)}
