@@ -1,0 +1,3 @@
+from repositories.users import UsuarioRepository
+from repositories.social_media import SocialMediaRepository
+from repositories.infidelity import InfidelityRepository

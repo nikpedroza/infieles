@@ -32,12 +32,13 @@ class UsuarioRepository():
         return result.scalar_one_or_none()
     
     async def create_user(self, usuario: UserCreate) -> Usuario | None:
-        result = await self.db.execute(
-            select(Usuario).where(Usuario.dni == usuario.dni)
-        )
-        existe = result.scalar_one_or_none()
-        if existe:
-            return None
+        if usuario.dni is not None:
+            result = await self.db.execute(
+                select(Usuario).where(Usuario.dni == usuario.dni)
+            )
+            existe = result.scalar_one_or_none()
+            if existe:
+                return None
         
         usuario_create = Usuario(**usuario.model_dump())
         self.db.add(usuario_create)
