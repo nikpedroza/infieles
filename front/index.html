@@ -30,6 +30,7 @@
         <div class="catalog-grid" id="catalogGrid">
             <!-- Cards will be injected here via JS -->
         </div>
+        <div id="paginationContainer" class="pagination"></div>
     </main>
 
     <!-- Details Modal -->
@@ -107,6 +108,18 @@
     <div id="lightboxModal" class="modal" style="z-index: 2000; align-items: center; justify-content: center; background: rgba(0,0,0,0.95);">
         <span class="close-modal" id="closeLightbox" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; text-shadow: 0 0 10px rgba(0,0,0,0.5);">&times;</span>
         <img id="lightboxImage" src="" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirmModal" class="modal" style="z-index: 2500;">
+        <div class="modal-content" style="max-width: 400px; padding: 2rem; text-align: center;">
+            <h3 style="color: var(--accent); margin-bottom: 1rem;">Atención</h3>
+            <p id="confirmMessage" style="margin-bottom: 2rem;"></p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="btnConfirmCancel" class="btn-primary" style="background: transparent; border: 1px solid var(--border); color: var(--text-primary);">Cancelar</button>
+                <button id="btnConfirmOk" class="btn-primary">Continuar</button>
+            </div>
+        </div>
     </div>
 
     <script src="js/script.js"></script>
