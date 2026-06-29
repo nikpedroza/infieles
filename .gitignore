@@ -18,6 +18,7 @@ env/
 .coverage
 htmlcov/
 .mypy_cache/
+*.pyc
 
 # Base de datos local o archivos sqlite/logs
 *.db
