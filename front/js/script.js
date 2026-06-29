@@ -1,5 +1,8 @@
 // State
-let people = {};
+let peopleList = [];
+let currentPage = 1;
+let totalPages = 1;
+const pageSize = 10;
 const API_URL = 'http://127.0.0.1:5000';
 
 // DOM Elements
@@ -50,43 +53,72 @@ function formatCommentDate(dateString) {
 function getImageUrl(photoPath) {
     if (!photoPath) return `${API_URL}/img/no_found_profile_user.jpg`;
     if (photoPath.startsWith('http') || photoPath.startsWith('data:')) return photoPath;
-    // Si la ruta no empieza con barra, se la agregamos para que quede http://127.0.0.1:5000/img/...
-    const prefix = photoPath.startsWith('/') ? '' : '/';
-    return `${API_URL}${prefix}${photoPath}`;
+
+    // El back guarda solo el nombre del archivo, por lo tanto siempre va a estar dentro de /img/
+    const cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
+    if (cleanPath.startsWith('img/')) return `${API_URL}/${cleanPath}`;
+    return `${API_URL}/img/${cleanPath}`;
 }
 
 // Rendering
 function renderCatalog(filter = '') {
     catalogGrid.innerHTML = '';
 
-    // Convertimos el Objeto a un Array pero le inyectamos la key como 'id'
-    const peopleList = Object.keys(people).map(key => {
-        return { id: key, ...people[key] };
-    });
-
     const filteredPeople = peopleList.filter(p => {
-        const name = p.name || '';
-        const surname = p.surname || '';
-        const dni = p.DNI || '';
+        const name = p.nombre || '';
+        const surname = p.apellido || '';
         const fullName = `${name} ${surname}`.toLowerCase();
-        return fullName.includes(filter.toLowerCase()) || String(dni).includes(filter);
+        return fullName.includes(filter.toLowerCase());
     });
 
-    filteredPeople.reverse().forEach(person => {
-        const lastHistory = person.infidelities && person.infidelities.length > 0 ? person.infidelities[person.infidelities.length - 1] : null;
+    filteredPeople.forEach(person => {
         const card = document.createElement('div');
         card.className = 'person-card';
         card.innerHTML = `
-            <img src="${getImageUrl(person.profile_photo)}" alt="${person.name}" class="card-img" onerror="this.onerror=null; this.src='${API_URL}/img/no_found_profile_user.jpg';">
+            <img src="${getImageUrl(person.foto_perfil)}" alt="${person.nombre}" class="card-img" onerror="this.onerror=null; this.src='${API_URL}/img/no_found_profile_user.jpg';">
             <div class="card-content">
-                <h2>${person.name} ${person.surname}</h2>
-                <div class="card-info">${calculateAge(person.birth_day)} años</div>
-                <p class="card-snippet">${lastHistory ? lastHistory.story : 'Sin reportes detallados'}</p>
+                <h2>${person.nombre} ${person.apellido}</h2>
+                <div class="card-info">Click para ver detalles</div>
             </div>
         `;
         card.onclick = () => openDetails(person);
         catalogGrid.appendChild(card);
     });
+}
+
+function renderPagination() {
+    const container = document.getElementById('paginationContainer');
+    if (!container) return;
+
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = `
+        <button class="btn-page" id="btnPrevPage" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>
+        <span id="pageInfo">Página ${currentPage} de ${totalPages}</span>
+        <button class="btn-page" id="btnNextPage" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>
+    `;
+
+    const btnPrev = document.getElementById('btnPrevPage');
+    const btnNext = document.getElementById('btnNextPage');
+
+    if (btnPrev) btnPrev.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    if (btnNext) btnNext.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
 }
 
 // Comment Helpers
@@ -326,30 +358,36 @@ async function openDetails(personSummary) {
         // Renderizamos con los datos completos
         modalBody.innerHTML = `
         <div class="modal-header-info">
-            <img src="${getImageUrl(person.profile_photo)}" alt="${person.name}" onerror="this.onerror=null; this.src='${API_URL}/img/no_found_profile_user.jpg';">
+            <img src="${getImageUrl(person.foto_perfil)}" alt="${person.nombre}" onerror="this.onerror=null; this.src='${API_URL}/img/no_found_profile_user.jpg';">
             <div class="details-column">
-                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">${person.name} ${person.surname}</h1>
+                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">${person.nombre} ${person.apellido}</h1>
                 <p style="color: var(--text-secondary); font-size: 1.1rem;">
-                    <strong>Edad:</strong> ${calculateAge(person.birth_day)} años <br>
+                    <strong>Edad:</strong> ${calculateAge(person.fecha_de_nacimiento)} años <br>
                     <strong>Estado:</strong> Reportado por infidelidad
                 </p>
                 <div class="social-links">
-                    ${person.social_media && person.social_media.instagram ? `<a href="https://instagram.com/${person.social_media.instagram.replace('@', '')}" target="_blank" class="social-badge instagram">Instagram</a>` : ''}
-                    ${person.social_media && person.social_media.twitter ? `<a href="https://twitter.com/${person.social_media.twitter.replace('@', '')}" target="_blank" class="social-badge twitter">Twitter/X</a>` : ''}
+                    ${person.redes_sociales ? person.redes_sociales.map(red => {
+            if (red.social_media.toLowerCase() === 'instagram') {
+                return `<a href="https://instagram.com/${red.handle.replace('@', '')}" target="_blank" class="social-badge instagram">Instagram</a>`;
+            } else if (red.social_media.toLowerCase() === 'twitter' || red.social_media.toLowerCase() === 'x') {
+                return `<a href="https://twitter.com/${red.handle.replace('@', '')}" target="_blank" class="social-badge twitter">Twitter/X</a>`;
+            }
+            return '';
+        }).join('') : ''}
                 </div>
             </div>
         </div>
         
         <div class="timeline">
             <h3 class="section-title">Actos Reportados</h3>
-            ${person.infidelities ? person.infidelities.map(i => `
+            ${person.infidelidades ? person.infidelidades.map(i => `
                 <div class="history-item">
-                    <div class="item-date">${i.datetime}</div>
-                    <p>${i.story}</p>
-                    ${i.evidence && i.evidence.length > 0 ? `
+                    <div class="item-date">${i.fecha_creacion}</div>
+                    <p>${i.historia}</p>
+                    ${i.evidencias && i.evidencias.length > 0 ? `
                         <div class="evidence-gallery" style="display: flex; gap: 0.8rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">
-                            ${i.evidence.map(ev => `
-                                <img src="${getImageUrl(ev)}" alt="Evidencia" onclick="openLightbox('${getImageUrl(ev)}')" style="cursor: pointer; height: 120px; width: 120px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onerror="this.style.display='none';">
+                            ${i.evidencias.map(ev => `
+                                <img src="${getImageUrl(ev.path)}" alt="Evidencia" onclick="openLightbox('${getImageUrl(ev.path)}')" style="cursor: pointer; height: 120px; width: 120px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onerror="this.style.display='none';">
                             `).join('')}
                         </div>
                     ` : ''}
@@ -531,10 +569,14 @@ addPersonForm.onsubmit = async (e) => {
             document.getElementById('fileTextPerfil').innerText = 'Seleccionar Imagen';
             document.getElementById('fileTextEvidencia').innerText = 'Añadir Evidencias';
 
-            // Recargar datos desde el servidor
+            // Recargar datos desde el servidor al principio
+            currentPage = 1;
             loadData();
+        } else if (response.status === 409) {
+            alert('Error: Ya existe un reporte para este usuario con esos mismos datos (Nombre, Apellido, Fecha de Nacimiento o DNI).');
         } else {
-            alert('Ocurrió un error al intentar publicar.');
+            const errData = await response.json().catch(() => ({}));
+            alert(`Ocurrió un error al intentar publicar: ${errData.detail || response.statusText}`);
         }
     } catch (error) {
         console.error("Error enviando formulario:", error);
@@ -545,6 +587,74 @@ addPersonForm.onsubmit = async (e) => {
     }
 };
 
+// Custom Confirm
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirmModal');
+        const msgEl = document.getElementById('confirmMessage');
+        const btnOk = document.getElementById('btnConfirmOk');
+        const btnCancel = document.getElementById('btnConfirmCancel');
+
+        msgEl.innerText = message;
+        modal.style.display = 'flex';
+
+        const cleanup = () => {
+            modal.style.display = 'none';
+            btnOk.onclick = null;
+            btnCancel.onclick = null;
+        };
+
+        btnOk.onclick = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        btnCancel.onclick = () => {
+            cleanup();
+            resolve(false);
+        };
+    });
+}
+
+// Validación en tiempo real de duplicados
+async function checkDuplicateUser() {
+    const nombre = document.getElementById('formNombre').value;
+    const apellido = document.getElementById('formApellido').value;
+    const fecha = document.getElementById('formNacimiento').value;
+
+    if (nombre && apellido && fecha) {
+        const fd = new FormData();
+        fd.append("nombre", nombre);
+        fd.append("apellido", apellido);
+        fd.append("fecha_nacimiento", fecha);
+
+        try {
+            const resp = await fetch(`${API_URL}/user/check-usuario`, {
+                method: 'POST',
+                body: fd
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.existe) {
+                    const continuar = await customConfirm("Ya existe alguien con estos datos (Nombre, Apellido y Fecha de Nacimiento). ¿Querés continuar y agregar un reporte sobre la misma persona de todos modos?");
+                    if (!continuar) {
+                        // Limpiar campos si el usuario se arrepiente
+                        document.getElementById('formNombre').value = '';
+                        document.getElementById('formApellido').value = '';
+                        document.getElementById('formNacimiento').value = '';
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error verificando usuario:", e);
+        }
+    }
+}
+
+document.getElementById('formNombre').addEventListener('blur', checkDuplicateUser);
+document.getElementById('formApellido').addEventListener('blur', checkDuplicateUser);
+document.getElementById('formNacimiento').addEventListener('blur', checkDuplicateUser);
+
 // Initial Render & API Connection
 async function loadData(silent = false) {
     if (!silent) {
@@ -553,10 +663,14 @@ async function loadData(silent = false) {
     }
 
     try {
-        const response = await fetch(`${API_URL}/`);
+        const response = await fetch(`${API_URL}/user/?page=${currentPage}&page_size=${pageSize}`);
         if (response.ok) {
-            people = await response.json();
+            const dataResponse = await response.json();
+            peopleList = dataResponse.data || [];
+            totalPages = dataResponse.total_pages || 1;
+
             renderCatalog();
+            renderPagination();
 
             // Restaurar el modal si la página se recargó y hay un hash de usuario activo
             checkHash();
