@@ -127,9 +127,9 @@ function buildCommentTree(commentsList) {
 
     const commentMap = {};
     commentsList.forEach(c => {
-        // Usamos c.id_comments como identificador principal. Si no existe, usamos una generación local.
-        const id = c.id_comments || Math.random().toString(36).substr(2, 9);
-        commentMap[id] = { ...c, id_comments: id, replies: [] };
+        // Usamos c.id_comments o c.id como identificador principal. Si no existe, usamos una generación local.
+        const id = c.id_comments || c.id || Math.random().toString(36).substr(2, 9);
+        commentMap[id] = { ...c, id_comments: id, id: id, replies: [] };
     });
 
     const rootComments = [];
@@ -148,8 +148,8 @@ function renderCommentNode(comment, personId) {
     const authorName = "Anónimo";
     const authorInitials = "A";
 
-    // El backend maneja comment_datetime, comment_date o datetime
-    const dateValue = comment.comment_datetime || comment.comment_date || comment.datetime || '';
+    // El backend devuelve comentario_datetime
+    const dateValue = comment.comentario_datetime || comment.comment_datetime || comment.comment_date || comment.datetime || '';
     const displayDate = formatCommentDate(dateValue);
     const dateHtml = displayDate ? `<span class="comment-date">${displayDate}</span>` : '';
 
@@ -160,9 +160,9 @@ function renderCommentNode(comment, personId) {
            </div>`
         : '';
 
-    // El mensaje puede venir en "message" o en "comment"
-    const messageContent = comment.message || comment.comment || '';
-    const commentId = comment.id_comments;
+    // El mensaje viene en "mensaje"
+    const messageContent = comment.mensaje || comment.message || comment.comment || '';
+    const commentId = comment.id_comments || comment.id;
 
     return `
         <div class="comment-node" id="commentNode_${commentId}">
@@ -262,15 +262,17 @@ async function submitComment(personId, message, parentId) {
             },
             body: JSON.stringify({
                 parent_id: parentId,
-                message: message
+                mensaje: message
             })
         });
 
         if (response.ok) {
-            const updatedPerson = await response.json();
+            // El endpoint de creacion devuelve {msg: ...}, hacemos un fetch para actualizar comentarios
+            const refreshResponse = await fetch(`${API_URL}/user/${personId}`);
+            const updatedPerson = await refreshResponse.json();
 
             // 1. Actualizamos únicamente la sección de comentarios en el DOM sin recargas ni fetches extra
-            updateCommentsDOM(updatedPerson.comments, personId);
+            updateCommentsDOM(updatedPerson.comentarios, personId);
 
             // 2. Limpiamos y replegamos los inputs correspondientes
             if (parentId) {
@@ -350,7 +352,7 @@ async function openDetails(personSummary) {
         const person = await response.json();
         person.id = personSummary.id;
 
-        const commentsTree = buildCommentTree(person.comments);
+        const commentsTree = buildCommentTree(person.comentarios);
         const commentsHtml = commentsTree.length > 0
             ? commentsTree.map(c => renderCommentNode(c, person.id)).join('')
             : '<p style="color: var(--text-secondary);" id="noCommentsText">Sin comentarios aún. ¡Sé el primero en comentar!</p>';
