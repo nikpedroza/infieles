@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import noload
 from uuid import UUID
-from models.users import Usuario
-from schema.users import UserCreate, CheckDuplicado
+from models import Usuario
+from schema import UserCreate, CheckDuplicado
 
 
 class UsuarioRepository():
