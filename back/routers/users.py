@@ -7,8 +7,8 @@ import os
 import aiofiles
 import asyncio
 from database import get_db
-from schema import UserCreate, PaginatedUsers, CheckDuplicado
-from repositories import UsuarioRepository, SocialMediaRepository, InfidelityRepository
+from schema import UserCreate, PaginatedUsers, CheckDuplicado, CommentCreate
+from repositories import UsuarioRepository, SocialMediaRepository, InfidelityRepository, CommentsRepository
 
 router = APIRouter()
 
@@ -92,7 +92,6 @@ async def new_user(
     
     await asyncio.gather(guardar_foto(foto_perfil, ruta_img), *tareas)
 
-    
     #Creacion de los demas datos en las distintas tablas
     if instagram:
         await socialmedia_repo.create_social(usuario.id, "instagram", instagram)
@@ -109,11 +108,17 @@ async def new_user(
 
     return JSONResponse(status_code=200, content={"msg":"Persona agregada correctamente"})
 
-
 @router.post("/{id}/comment")
-def comentario(id: str):
-    pass
-    #HACER
+async def comentario(
+    id: UUID, 
+    comment: CommentCreate, 
+    db:AsyncSession = Depends(get_db)
+):
+    comment_repo = CommentsRepository(db)
+    await comment_repo.create_comment(user_id=id, comentario=comment)
+    await db.commit()
+    return JSONResponse(content={"msg": "Comentario agregado"}, status_code=201)
+
 
 @router.post("/check-usuario")
 async def check_usuario(
