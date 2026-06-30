@@ -8,6 +8,7 @@ class SocialMediaRepository():
         self.db = db
     
     async def create_social(self, user_id: UUID, social_media: str, handle: str) -> None:
+        handle = handle.replace("@", "")
         social = SocialMediaCreate(
             user_id=user_id,
             social_media=social_media,
