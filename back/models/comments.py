@@ -9,6 +9,5 @@ class Comentarios(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("comments.id"), nullable=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    infidelity_id = Column(UUID(as_uuid=True), ForeignKey("infidelity.id"), nullable=False)
     mensaje = Column(Text, nullable=False)
     comentario_datetime = Column(TIMESTAMP, nullable=False, default=func.now())
